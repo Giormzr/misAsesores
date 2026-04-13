@@ -47,12 +47,12 @@ async function cargarRecursos() {
 
     navigate(null, 'view-recursos');
 }
-
 function abrirVideos(asignatura) {
     document.getElementById('videos-title').innerText = `Recursos: ${asignatura}`;
     const list = document.getElementById('videos-list');
     list.innerHTML = '';
 
+    // --- SECCIONES DESTACADAS (Hardcoded) ---
     if (asignatura === "Química") {
         list.innerHTML += `
             <h2 class="text-2xl font-bold text-[#3b71ca] mt-8 mb-4 border-b border-slate-200 pb-2">Destacado: Videojuego Educativo</h2>
@@ -87,27 +87,63 @@ function abrirVideos(asignatura) {
         `;
     }
 
+    // --- CARGA DINÁMICA DESDE RECURSOS_DB ---
     const temas = RECURSOS_DB[asignatura] || {};
     Object.keys(temas).forEach(temaNombre => {
         list.innerHTML += `<h2 class="text-2xl font-bold text-[#3b71ca] mt-8 mb-4 border-b border-slate-200 pb-2">${temaNombre}</h2>`;
-        temas[temaNombre].forEach(video => {
-            const linkEmbed = formatearLinkYouTube(video.url);
-            const linkNormal = video.url.includes("embed/") ? video.url.replace("embed/", "watch?v=") : video.url;
+        
+        temas[temaNombre].forEach(recurso => {
+            // Detectar si es imagen o video
+            const esImagen = recurso.tipo === "imagen" || (recurso.url && recurso.url.match(/\.(jpeg|jpg|gif|png)$/) != null);
+            
+            let visualizadorHTML = "";
+            let footerHTML = "";
+
+            if (esImagen) {
+                // Renderizado para el Cartel del Evento
+                visualizadorHTML = `
+                    <a href="${recurso.link_externo || recurso.url}" target="_blank" class="block h-full w-full relative group">
+                        <img src="${recurso.url}" class="w-full h-full object-cover" alt="${recurso.titulo}">
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <span class="text-white text-xs font-bold bg-[#3b71ca] px-3 py-1 rounded-full shadow-lg">Ver en Instagram</span>
+                        </div>
+                    </a>`;
+                footerHTML = `<p class="text-[11px] text-slate-500 text-center px-2 mt-1">📍 Haz clic en la imagen para ver detalles</p>`;
+            } else {
+                // Renderizado para Videos de Apoyo
+                const linkEmbed = formatearLinkYouTube(recurso.url);
+                const linkNormal = recurso.url.includes("embed/") ? recurso.url.replace("embed/", "watch?v=") : recurso.url;
+                
+                visualizadorHTML = `
+                    <iframe class="w-full h-full" src="${linkEmbed}" title="${recurso.titulo}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+                
+                footerHTML = `
+                    <p class="text-[11px] text-slate-500 text-center px-2">
+                        ¿Problemas con el video? <br>
+                        <a href="${linkNormal}" target="_blank" class="text-[#3b71ca] hover:text-blue-800 font-bold underline">Ver en YouTube</a>
+                    </p>`;
+            }
+
             list.innerHTML += `
                 <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col md:flex-row gap-5 hover:shadow-md transition-shadow mb-3">
                     <div class="w-full md:w-72 flex-shrink-0 flex flex-col">
                         <div class="h-40 bg-slate-100 rounded-lg overflow-hidden mb-2 shadow-sm border border-slate-200">
-                            <iframe class="w-full h-full" src="${linkEmbed}" title="${video.titulo}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                            ${visualizadorHTML}
                         </div>
-                        <p class="text-[11px] text-slate-500 text-center px-2">
-                            ¿Problemas con el video? <br>
-                            <a href="${linkNormal}" target="_blank" class="text-[#3b71ca] hover:text-blue-800 font-bold underline">Ver en YouTube</a>
-                        </p>
+                        ${footerHTML}
                     </div>
                     <div class="flex-1 flex flex-col justify-center py-2">
-                        <span class="text-xs font-bold text-[#3b71ca] uppercase tracking-wider mb-1">Tutorial de Apoyo</span>
-                        <h3 class="font-bold text-xl text-slate-800 mb-2">${video.titulo}</h3>
-                        <p class="text-sm text-slate-500 mb-4 flex items-center italic">Canal: ${video.canal}</p>
+                        <span class="text-xs font-bold ${esImagen ? 'text-pink-600' : 'text-[#3b71ca]'} uppercase tracking-wider mb-1">
+                            ${esImagen ? 'Evento Presencial' : 'Tutorial de Apoyo'}
+                        </span>
+                        <h3 class="font-bold text-xl text-slate-800 mb-2">${recurso.titulo}</h3>
+                        <p class="text-sm text-slate-500 mb-4 flex items-center italic">
+                            ${esImagen ? '📍 Veracruz, Ver.' : 'Canal: ' + recurso.canal}
+                        </p>
+                        ${esImagen ? `
+                        <div class="flex items-center text-xs font-bold text-slate-700 bg-slate-100 w-fit px-3 py-1.5 rounded-md">
+                            📅 18 DE ABRIL - CLUB ROTARIO
+                        </div>` : ''}
                     </div>
                 </div>
             `;

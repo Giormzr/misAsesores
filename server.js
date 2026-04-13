@@ -15,13 +15,8 @@ const io = new Server(server);
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
-
-// ===== DB =====
-if (!fs.existsSync('/data/database.sqlite')) {
-    fs.copyFileSync('./database.sqlite', '/data/database.sqlite');
-}
-
-const db = new Database('/data/database.sqlite');
+const dbPath = '/data/database.sqlite';
+const db = new Database(dbPath);
 
 // ===== CREAR TABLAS =====
 db.prepare(`

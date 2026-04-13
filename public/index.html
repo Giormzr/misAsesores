@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MisAsesores</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
+
+    <!-- ======================== LOGIN ======================== -->
+    <div id="view-login" class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white p-8 rounded-xl shadow-sm border border-slate-100 w-full max-w-md">
+            <div class="text-center mb-8">
+                <div class="bg-[#3b71ca] text-white w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3 shadow-md">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"></path></svg>
+                </div>
+                <h1 class="text-2xl font-bold text-slate-900">MisAsesores</h1>
+                <p class="text-slate-500 text-sm mt-1">Inicia sesión en tu cuenta</p>
+            </div>
+            <form id="form-login" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Correo electrónico</label>
+                    <input type="email" id="login-correo" class="w-full border border-slate-200 rounded-lg px-3 py-2" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Contraseña</label>
+                    <input type="password" id="login-password" class="w-full border border-slate-200 rounded-lg px-3 py-2" required>
+                </div>
+                <button type="submit" class="w-full bg-[#3b71ca] hover:bg-[#3261ad] text-white font-medium py-2.5 rounded-lg">Iniciar Sesión</button>
+            </form>
+            <p class="text-center text-sm text-slate-500 mt-6">¿No tienes cuenta? <a href="#" onclick="navigate(event, 'view-signup')" class="text-[#3b71ca] font-medium hover:underline">Regístrate</a></p>
+        </div>
+    </div>
+
+    <!-- ======================== SIGNUP ======================== -->
+    <div id="view-signup" class="hidden flex flex-col items-center justify-center min-h-screen p-4 py-10">
+        <div class="bg-white p-8 rounded-xl shadow-sm border border-slate-100 w-full max-w-2xl">
+            <h1 class="text-2xl font-bold text-center text-slate-900 mb-6">Crear Cuenta</h1>
+            <form id="form-signup" class="space-y-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Correo electrónico</label>
+                        <input type="email" id="reg-correo" class="w-full border rounded-lg px-3 py-2" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Contraseña</label>
+                        <input type="password" id="reg-password" class="w-full border rounded-lg px-3 py-2" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">No. de Control</label>
+                        <input type="number" id="reg-nocontrol" class="w-full border rounded-lg px-3 py-2" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">CURP</label>
+                        <input type="text" id="reg-curp" class="w-full border rounded-lg px-3 py-2" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Nombre completo</label>
+                        <input type="text" id="reg-nombre" class="w-full border rounded-lg px-3 py-2" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Turno</label>
+                        <select id="reg-turno" class="w-full border rounded-lg px-3 py-2" required>
+                            <option value="Matutino">Matutino</option>
+                            <option value="Vespertino">Vespertino</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Semestre</label>
+                        <select id="reg-semestre" class="w-full border rounded-lg px-3 py-2" required>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Especialidad</label>
+                        <input type="text" id="reg-especialidad" class="w-full border rounded-lg px-3 py-2" required>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium mb-1">Rol</label>
+                        <select id="role-select" onchange="toggleAsesorFields()" class="w-full border rounded-lg px-3 py-2 text-[#3b71ca] font-medium">
+                            <option value="Asesorado">Asesorado (Alumno)</option>
+                            <option value="Asesor">Asesor</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Campos extra solo para Asesor -->
+                <div id="asesor-fields" class="hidden border-t pt-5 mt-5 space-y-5">
+                    <div>
+                        <h3 class="font-medium text-slate-800 mb-3">Materias que puedes asesorar</h3>
+                        <div class="grid grid-cols-2 gap-3">
+                            <label class="flex items-center space-x-2"><input type="checkbox" value="Física" class="materia-checkbox"><span>Física</span></label>
+                            <label class="flex items-center space-x-2"><input type="checkbox" value="Biología" class="materia-checkbox"><span>Biología</span></label>
+                            <label class="flex items-center space-x-2"><input type="checkbox" value="Matemáticas" class="materia-checkbox"><span>Matemáticas</span></label>
+                            <label class="flex items-center space-x-2"><input type="checkbox" value="Química" class="materia-checkbox"><span>Química</span></label>
+                            <label class="flex items-center space-x-2"><input type="checkbox" value="Submódulo de Programación" class="materia-checkbox"><span>Submódulo de Programación</span></label>
+                            <label class="flex items-center space-x-2"><input type="checkbox" value="Ciencias Sociales" class="materia-checkbox"><span>Ciencias Sociales</span></label>
+                            <label class="flex items-center space-x-2"><input type="checkbox" value="Humanidades" class="materia-checkbox"><span>Humanidades</span></label>
+                            <label class="flex items-center space-x-2"><input type="checkbox" value="Inglés" class="materia-checkbox"><span>Inglés</span></label>
+                            <label class="flex items-center space-x-2"><input type="checkbox" value="Lengua y Comunicación" class="materia-checkbox"><span>Lengua y Comunicación</span></label>
+                            <label class="flex items-center space-x-2"><input type="checkbox" value="Historia" class="materia-checkbox"><span>Historia</span></label>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="font-medium text-slate-800 mb-3">Horario de disponibilidad</h3>
+                        <div class="overflow-x-auto border border-slate-200 rounded-lg">
+                            <table class="w-full text-sm text-center">
+                                <thead class="bg-slate-50 border-b">
+                                    <tr><th class="py-2">Hora</th><th>Lun</th><th>Mar</th><th>Mie</th><th>Jue</th><th>Vie</th></tr>
+                                </thead>
+                                <tbody id="schedule-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-[#3b71ca] text-white font-medium py-2.5 rounded-lg">Crear Cuenta</button>
+            </form>
+            <p class="text-center text-sm text-slate-500 mt-6">¿Ya tienes cuenta? <a href="#" onclick="navigate(event, 'view-login')" class="text-[#3b71ca] hover:underline">Inicia sesión</a></p>
+        </div>
+    </div>
+
+    <!-- ======================== EDITAR PERFIL ======================== -->
+    <div id="view-edit-profile" class="hidden flex flex-col items-center justify-center min-h-screen p-4 py-10">
+        <div class="bg-white p-8 rounded-xl shadow-sm border border-slate-100 w-full max-w-2xl">
+            <h1 class="text-2xl font-bold text-center text-slate-900 mb-6">Editar Mi Perfil</h1>
+            <form id="form-edit-profile" class="space-y-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Nombre completo</label>
+                        <input type="text" id="edit-nombre" class="w-full border rounded-lg px-3 py-2" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Turno</label>
+                        <select id="edit-turno" class="w-full border rounded-lg px-3 py-2" required>
+                            <option value="Matutino">Matutino</option>
+                            <option value="Vespertino">Vespertino</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Semestre</label>
+                        <select id="edit-semestre" class="w-full border rounded-lg px-3 py-2" required>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Especialidad</label>
+                        <input type="text" id="edit-especialidad" class="w-full border rounded-lg px-3 py-2" required>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium mb-1">Rol</label>
+                        <select id="edit-role-select" onchange="toggleEditAsesorFields()" class="w-full border rounded-lg px-3 py-2 text-[#3b71ca] font-medium">
+                            <option value="Asesorado">Asesorado (Alumno)</option>
+                            <option value="Asesor">Asesor</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Campos extra solo para Asesor en edición -->
+                <div id="edit-asesor-fields" class="hidden border-t pt-5 mt-5 space-y-5">
+                    <div>
+                        <h3 class="font-medium text-slate-800 mb-3">Materias que puedes asesorar</h3>
+                        <div class="grid grid-cols-2 gap-3">
+                            <label class="flex items-center space-x-2"><input type="checkbox" value="Física" class="edit-materia-checkbox"><span>Física</span></label>
+                            <label class="flex items-center space-x-2"><input type="checkbox" value="Biología" class="edit-materia-checkbox"><span>Biología</span></label>
+                            <label class="flex items-center space-x-2"><input type="checkbox" value="Matemáticas" class="edit-materia-checkbox"><span>Matemáticas</span></label>
+                            <label class="flex items-center space-x-2"><input type="checkbox" value="Química" class="edit-materia-checkbox"><span>Química</span></label>
+                            <label class="flex items-center space-x-2"><input type="checkbox" value="Submódulo de Programación" class="edit-materia-checkbox"><span>Submódulo de Programación</span></label>
+                            <label class="flex items-center space-x-2"><input type="checkbox" value="Ciencias Sociales" class="edit-materia-checkbox"><span>Ciencias Sociales</span></label>
+                            <label class="flex items-center space-x-2"><input type="checkbox" value="Humanidades" class="edit-materia-checkbox"><span>Humanidades</span></label>
+                            <label class="flex items-center space-x-2"><input type="checkbox" value="Inglés" class="edit-materia-checkbox"><span>Inglés</span></label>
+                            <label class="flex items-center space-x-2"><input type="checkbox" value="Lengua y Comunicación" class="edit-materia-checkbox"><span>Lengua y Comunicación</span></label>
+                            <label class="flex items-center space-x-2"><input type="checkbox" value="Historia" class="edit-materia-checkbox"><span>Historia</span></label>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="font-medium text-slate-800 mb-3">Horario de disponibilidad</h3>
+                        <div class="overflow-x-auto border border-slate-200 rounded-lg">
+                            <table class="w-full text-sm text-center">
+                                <thead class="bg-slate-50 border-b">
+                                    <tr><th class="py-2">Hora</th><th>Lun</th><th>Mar</th><th>Mie</th><th>Jue</th><th>Vie</th></tr>
+                                </thead>
+                                <tbody id="edit-schedule-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botones -->
+                <div class="flex flex-col space-y-3">
+                    <div class="flex space-x-3">
+                        <button type="button" onclick="navigate(null, 'view-dashboard')" class="w-1/2 bg-slate-100 text-slate-600 font-medium py-2.5 rounded-lg hover:bg-slate-200">Cancelar</button>
+                        <button type="submit" class="w-1/2 bg-[#3b71ca] text-white font-medium py-2.5 rounded-lg hover:bg-[#3261ad]">Guardar Cambios</button>
+                    </div>
+                    <button type="button" onclick="borrarCuenta()" class="w-full bg-red-50 text-red-600 border border-red-200 font-medium py-2.5 rounded-lg hover:bg-red-100">
+                        🗑️ Borrar mi cuenta definitivamente
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ======================== DASHBOARD ======================== -->
+    <div id="view-dashboard" class="hidden min-h-screen flex flex-col">
+        <nav class="bg-white border-b border-slate-200 px-6 py-3 flex justify-between items-center relative">
+            <div class="flex items-center space-x-3">
+                <button onclick="toggleMenu('nav-menu')" class="text-slate-600 hover:text-[#3b71ca] p-1 focus:outline-none">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+                <div id="nav-menu" class="hidden absolute top-14 left-4 bg-white border border-slate-200 shadow-xl rounded-xl w-48 py-2 z-50">
+                    <button onclick="navigate(null, 'view-dashboard'); toggleMenu('nav-menu');" class="w-full text-left px-5 py-2.5 hover:bg-slate-50 text-slate-700 font-medium border-b">👨‍🏫 Asesores</button>
+                    <button onclick="cargarRecursos(); toggleMenu('nav-menu');" class="w-full text-left px-5 py-2.5 hover:bg-slate-50 text-slate-700 font-medium">📚 Recursos</button>
+                    <button onclick="prepararEdicion(); toggleMenu('nav-menu');" class="w-full text-left px-5 py-2.5 hover:bg-slate-50 text-blue-600 font-bold border-t">⚙️ Mi Perfil</button>
+                </div>
+                <span class="font-bold text-slate-800 text-lg">MisAsesores <span id="user-name-display" class="text-sm font-normal text-slate-500 ml-2"></span></span>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button onclick="cargarBandeja()" class="relative text-slate-600 hover:text-[#3b71ca]">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                    <span id="badge-notif" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-white">0</span>
+                </button>
+                <button onclick="cerrarSesion()" class="text-red-500 hover:text-red-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                </button>
+            </div>
+        </nav>
+        <main class="flex-1 max-w-5xl w-full mx-auto p-6">
+            <h1 class="text-3xl font-bold text-slate-900 mb-6">Encuentra tu asesor</h1>
+            <div id="asesores-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </main>
+    </div>
+
+    <!-- ======================== RECURSOS ======================== -->
+    <div id="view-recursos" class="hidden min-h-screen flex flex-col">
+        <nav class="bg-white border-b px-6 py-3 flex items-center">
+            <button onclick="navigate(null, 'view-dashboard')" class="mr-4 text-slate-600 font-bold">← Volver</button>
+            <span class="font-bold text-lg">Asignaturas</span>
+        </nav>
+        <main class="flex-1 max-w-5xl w-full mx-auto p-6">
+            <div id="recursos-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
+        </main>
+    </div>
+
+    <!-- ======================== VIDEOS ======================== -->
+    <div id="view-videos" class="hidden min-h-screen flex flex-col bg-slate-50">
+        <nav class="bg-white border-b px-6 py-4 flex items-center">
+            <button onclick="navigate(null, 'view-recursos')" class="text-[#3b71ca] font-medium flex items-center">
+                <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg> Volver
+            </button>
+        </nav>
+        <main class="flex-1 max-w-4xl w-full mx-auto p-6">
+            <h1 id="videos-title" class="text-3xl font-bold text-slate-900 mb-6"></h1>
+            <div id="videos-list" class="space-y-5"></div>
+        </main>
+    </div>
+
+    <!-- ======================== PERFIL ASESOR ======================== -->
+    <div id="view-profile" class="hidden min-h-screen flex flex-col">
+        <nav class="bg-white border-b px-6 py-4">
+            <button onclick="navigate(null, 'view-dashboard')" class="text-slate-600 font-medium">← Volver</button>
+        </nav>
+        <main class="flex-1 max-w-4xl w-full mx-auto p-6 space-y-4">
+            <div class="bg-white border p-6 rounded-xl flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div id="prof-initial" class="w-16 h-16 rounded-full bg-blue-50 text-[#3b71ca] flex items-center justify-center font-bold text-2xl"></div>
+                    <div>
+                        <h2 id="prof-nombre" class="text-2xl font-bold"></h2>
+                        <div class="text-sm text-slate-500 mt-1">
+                            <span id="prof-turno"></span> • Semestre <span id="prof-semestre"></span> • <span id="prof-especialidad"></span>
+                        </div>
+                    </div>
+                </div>
+                <button id="btn-mandar-mensaje" class="bg-[#3b71ca] text-white px-5 py-2.5 rounded-lg font-medium hover:bg-[#3261ad]">Enviar mensaje</button>
+            </div>
+            <div class="bg-white border p-6 rounded-xl">
+                <h3 class="font-bold mb-4">Materias</h3>
+                <div id="prof-materias" class="flex flex-wrap gap-2"></div>
+            </div>
+            <div class="bg-white border p-6 rounded-xl">
+                <h3 class="font-bold mb-4">Horario de Disponibilidad</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-center border-collapse">
+                        <tbody id="profile-schedule-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ======================== BANDEJA ======================== -->
+    <div id="view-inbox" class="hidden min-h-screen flex flex-col">
+        <nav class="bg-white border-b px-6 py-4">
+            <button onclick="navigate(null, 'view-dashboard')" class="text-slate-600 font-medium">← Volver</button>
+        </nav>
+        <main class="flex-1 max-w-3xl w-full mx-auto p-6">
+            <div id="inbox-list" class="space-y-3"></div>
+        </main>
+    </div>
+
+    <!-- ======================== CHAT ======================== -->
+    <div id="view-chat" class="hidden h-screen flex flex-col bg-white">
+        <div class="border-b px-4 py-3 flex items-center bg-white shadow-sm z-10">
+            <button onclick="navigate(null, 'view-dashboard')" class="mr-3 font-bold text-xl">←</button>
+            <div class="w-9 h-9 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center font-bold mr-3" id="chat-initial"></div>
+            <h2 id="chat-title" class="font-bold text-slate-800 flex-1 truncate"></h2>
+            <div id="contenedor-boton-meet"></div>
+        </div>
+        <div id="chat-messages" class="flex-1 p-4 overflow-y-auto bg-slate-50 space-y-4 no-scrollbar"></div>
+        <div class="p-4 border-t flex space-x-2 bg-white">
+            <input id="chat-input" type="text" placeholder="Escribe un mensaje..." class="flex-1 border border-slate-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#3b71ca] outline-none">
+            <button id="chat-send-btn" class="bg-[#3b71ca] text-white px-4 py-2 rounded-lg font-bold">Enviar</button>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/chat.js"></script>
+    <script src="js/schedule.js"></script>
+</body>
+</html>

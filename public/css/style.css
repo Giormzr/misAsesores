@@ -1,0 +1,21 @@
+/* Estilos personalizados para la cuadrícula del horario interactivo */
+.schedule-checkbox:checked + label {
+    background-color: #4ade80; /* emerald-400 de Tailwind */
+    color: white;
+    border-color: #4ade80;
+}
+
+.schedule-checkbox:checked + label::after {
+    content: '✓';
+    display: block;
+    text-align: center;
+}
+
+/* Ocultar scrollbar en el chat para mantener el diseño limpio */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}

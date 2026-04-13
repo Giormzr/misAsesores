@@ -15,8 +15,15 @@ const io = new Server(server);
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
-const dbPath = '/data/database.sqlite';
-const db = new Database(dbPath);
+const fs = require('fs');
+const pathDB = '/data';
+
+// 👇 crea la carpeta si no existe
+if (!fs.existsSync(pathDB)) {
+    fs.mkdirSync(pathDB, { recursive: true });
+}
+
+const db = new Database('/data/database.sqlite');
 
 // ===== CREAR TABLAS =====
 db.prepare(`

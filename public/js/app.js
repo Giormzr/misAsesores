@@ -479,3 +479,11 @@ async function actualizarNotificaciones() {
     } catch (e) {}
 }
 window.actualizarNotificaciones = actualizarNotificaciones;
+
+function mostrarConfidencialidad() {
+    alert("El equipo de MisAsesores se compromete a bajo ninguna circunstancia revelar datos de los usuarios.");
+}
+
+function mostrarAdvertencia() {
+    alert("Crear perfiles falsos o suplantar identidades es ilegal y puede ser penado.");
+}

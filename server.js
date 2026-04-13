@@ -1,235 +1,155 @@
 require('dotenv').config();
 const express = require('express');
-const Database = require('better-sqlite3');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
+const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+    cors: { origin: "*" }
+});
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
-const db = new Database('./database.sqlite');
 
-// ===== CREAR TABLAS =====
-db.prepare(`
-CREATE TABLE IF NOT EXISTS usuarios (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    correo TEXT UNIQUE,
-    password TEXT,
-    no_control TEXT,
-    curp TEXT,
-    nombre TEXT,
-    turno TEXT,
-    semestre INTEGER,
-    especialidad TEXT,
-    rol TEXT,
-    materias TEXT,
-    horario TEXT
-)`).run();
-
-db.prepare(`
-CREATE TABLE IF NOT EXISTS mensajes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    remitente_id INTEGER,
-    receptor_id INTEGER,
-    texto TEXT,
-    hora TEXT,
-    leido INTEGER DEFAULT 0
-)`).run();
-
-db.prepare(`
-CREATE TABLE IF NOT EXISTS recursos (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    asignatura TEXT,
-    tema TEXT,
-    titulo TEXT,
-    url TEXT,
-    canal TEXT
-)`).run();
+// ===== SUPABASE =====
+const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_KEY
+);
 
 // ===== SIGNUP =====
-app.post('/api/signup', (req, res) => {
+app.post('/api/signup', async (req, res) => {
     try {
         const { correo, password, no_control, curp, nombre, turno, semestre, especialidad, rol, materias, horario } = req.body;
         const pass = bcrypt.hashSync(password, 10);
 
-        const result = db.prepare(`
-            INSERT INTO usuarios (correo, password, no_control, curp, nombre, turno, semestre, especialidad, rol, materias, horario)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).run(correo, pass, no_control, curp, nombre, turno, semestre, especialidad, rol, materias, horario);
+        const { data, error } = await supabase.from('usuarios').insert([{
+            correo, password: pass, no_control, curp, nombre, turno, semestre, especialidad, rol, materias, horario
+        }]).select();
 
-        res.json({ id: result.lastInsertRowid, nombre, rol });
+        if (error) throw error;
+
+        res.json({ id: data[0].id, nombre, rol });
 
     } catch (err) {
-        console.error("ERROR SIGNUP:", err.message);
         res.status(400).json({ error: err.message });
     }
 });
 
 // ===== LOGIN =====
-app.post('/api/login', (req, res) => {
+app.post('/api/login', async (req, res) => {
     try {
-        const row = db.prepare(`SELECT * FROM usuarios WHERE correo = ?`).get(req.body.correo);
+        const { data, error } = await supabase
+            .from('usuarios')
+            .select('*')
+            .eq('correo', req.body.correo)
+            .single();
 
-        if (row && bcrypt.compareSync(req.body.password, row.password)) {
-            delete row.password;
-            res.json({ success: true, usuario: row });
-        } else {
-            res.status(401).json({ success: false, error: "Credenciales incorrectas" });
+        if (error || !data) {
+            return res.status(401).json({ success: false });
         }
+
+        if (bcrypt.compareSync(req.body.password, data.password)) {
+            delete data.password;
+            res.json({ success: true, usuario: data });
+        } else {
+            res.status(401).json({ success: false });
+        }
+
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// ===== ACTUALIZAR USUARIO =====
-app.put('/api/usuarios/actualizar', (req, res) => {
+// ===== ACTUALIZAR =====
+app.put('/api/usuarios/actualizar', async (req, res) => {
     try {
         const { id, nombre, turno, semestre, especialidad, rol, materias, horario } = req.body;
 
-        db.prepare(`
-            UPDATE usuarios 
-            SET nombre = ?, turno = ?, semestre = ?, especialidad = ?, rol = ?, materias = ?, horario = ?
-            WHERE id = ?
-        `).run(nombre, turno, semestre, especialidad, rol, materias, horario, id);
+        const { error } = await supabase
+            .from('usuarios')
+            .update({ nombre, turno, semestre, especialidad, rol, materias, horario })
+            .eq('id', id);
 
-        const row = db.prepare(`SELECT * FROM usuarios WHERE id = ?`).get(id);
-        delete row.password;
+        if (error) throw error;
 
-        res.json({ success: true, usuario: row });
+        const { data } = await supabase.from('usuarios').select('*').eq('id', id).single();
+        delete data.password;
+
+        res.json({ success: true, usuario: data });
 
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 });
 
-// ===== ELIMINAR USUARIO =====
-app.delete('/api/usuario/:id', (req, res) => {
+// ===== ELIMINAR =====
+app.delete('/api/usuario/:id', async (req, res) => {
     try {
         const id = req.params.id;
 
-        db.prepare(`DELETE FROM mensajes WHERE remitente_id = ? OR receptor_id = ?`).run(id, id);
-        db.prepare(`DELETE FROM usuarios WHERE id = ?`).run(id);
+        await supabase.from('mensajes').delete().or(`remitente_id.eq.${id},receptor_id.eq.${id}`);
+        await supabase.from('usuarios').delete().eq('id', id);
 
         res.json({ success: true });
 
     } catch (err) {
-        res.status(400).json({ error: "Error al eliminar" });
+        res.status(400).json({ error: err.message });
     }
 });
 
 // ===== ASESORES =====
-app.get('/api/asesores', (req, res) => {
-    const rows = db.prepare(`
-        SELECT id, nombre, turno, semestre, especialidad, materias 
-        FROM usuarios WHERE rol = 'Asesor'
-    `).all();
+app.get('/api/asesores', async (req, res) => {
+    const { data } = await supabase
+        .from('usuarios')
+        .select('id, nombre, turno, semestre, especialidad, materias')
+        .eq('rol', 'Asesor');
 
-    res.json(rows);
+    res.json(data);
 });
 
-// ===== OBTENER USUARIO =====
-app.get('/api/usuario/:id', (req, res) => {
-    const row = db.prepare(`
-        SELECT id, nombre, turno, semestre, especialidad, materias, no_control, horario, rol 
-        FROM usuarios WHERE id = ?
-    `).get(req.params.id);
+// ===== USUARIO =====
+app.get('/api/usuario/:id', async (req, res) => {
+    const { data } = await supabase
+        .from('usuarios')
+        .select('*')
+        .eq('id', req.params.id)
+        .single();
 
-    res.json(row);
+    res.json(data);
 });
 
-// ===== HISTORIAL MENSAJES =====
-app.get('/api/mensajes/historial/:miId/:suId', (req, res) => {
-    const rows = db.prepare(`
-        SELECT * FROM mensajes 
-        WHERE (remitente_id = ? AND receptor_id = ?) 
-        OR (remitente_id = ? AND receptor_id = ?) 
-        ORDER BY id ASC
-    `).all(req.params.miId, req.params.suId, req.params.suId, req.params.miId);
+// ===== MENSAJES =====
+app.get('/api/mensajes/historial/:miId/:suId', async (req, res) => {
+    const { data } = await supabase
+        .from('mensajes')
+        .select('*')
+        .or(`and(remitente_id.eq.${req.params.miId},receptor_id.eq.${req.params.suId}),and(remitente_id.eq.${req.params.suId},receptor_id.eq.${req.params.miId})`)
+        .order('id', { ascending: true });
 
-    res.json(rows || []);
+    res.json(data || []);
 });
 
-// ===== CONTACTOS =====
-app.get('/api/mensajes/contactos/:miId', (req, res) => {
-    const rows = db.prepare(`
-        SELECT DISTINCT u.id, u.nombre, u.rol 
-        FROM usuarios u 
-        JOIN mensajes m 
-        ON (u.id = m.remitente_id OR u.id = m.receptor_id) 
-        WHERE (m.remitente_id = ? OR m.receptor_id = ?) 
-        AND u.id != ?
-    `).all(req.params.miId, req.params.miId, req.params.miId);
-
-    res.json(rows || []);
-});
-
-// ===== MARCAR LEIDOS =====
-app.post('/api/mensajes/marcar-leidos', (req, res) => {
-    const { miId, suId } = req.body;
-
-    db.prepare(`
-        UPDATE mensajes 
-        SET leido = 1 
-        WHERE receptor_id = ? AND remitente_id = ? AND leido = 0
-    `).run(miId, suId);
-
-    io.to(suId).emit('visto_confirmado', { por: miId });
-
-    res.json({ success: true });
-});
-
-// ===== NO LEIDOS =====
-app.get('/api/mensajes/no-leidos/:miId', (req, res) => {
-    const row = db.prepare(`
-        SELECT COUNT(*) as total 
-        FROM mensajes 
-        WHERE receptor_id = ? AND leido = 0
-    `).get(req.params.miId);
-
-    res.json({ total: row ? row.total : 0 });
-});
-
-// ===== RECURSOS =====
-app.get('/api/recursos', (req, res) => {
-    const rows = db.prepare(`SELECT * FROM recursos`).all();
-
-    const r_obj = {};
-    rows.forEach(r => {
-        if (!r_obj[r.asignatura]) r_obj[r.asignatura] = {};
-        if (!r_obj[r.asignatura][r.tema]) r_obj[r.asignatura][r.tema] = [];
-
-        r_obj[r.asignatura][r.tema].push({
-            titulo: r.titulo,
-            url: r.url,
-            canal: r.canal
-        });
-    });
-
-    res.json(r_obj);
-});
-
-// ===== SOCKET.IO =====
+// ===== SOCKET =====
 io.on('connection', (socket) => {
     socket.on('unirse', (userId) => socket.join(userId));
 
-    socket.on('mensaje_privado', (data) => {
-        const result = db.prepare(`
-            INSERT INTO mensajes (remitente_id, receptor_id, texto, hora)
-            VALUES (?, ?, ?, ?)
-        `).run(data.remitente_id, data.receptor_id, data.texto, data.hora);
+    socket.on('mensaje_privado', async (data) => {
+        const { data: inserted } = await supabase
+            .from('mensajes')
+            .insert([data])
+            .select();
 
-        data.id = result.lastInsertRowid;
+        data.id = inserted[0].id;
 
         socket.to(data.receptor_id).emit('recibir_mensaje', data);
     });
 });
 
-// ===== SERVER =====
-server.listen(3000, () => console.log("Servidor en puerto 3000"));
+server.listen(3000, () => console.log("Servidor listo"));

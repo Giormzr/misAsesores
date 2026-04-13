@@ -208,8 +208,17 @@ app.get('/api/recursos', async (req, res) => {
             console.log("Primer acceso: Registrando temas en la DB...");
             const insertList = [];
             for (const item of TEMAS_A_BUSCAR) {
-                if (item.query === "MANUAL_GAME") {
-                    insertList.push({ asignatura: item.asig, tema: item.tema, titulo: item.titulo, canal: item.canal, url: item.url });
+                // Se agregan tanto MANUAL_GAME como MANUAL_EVENT
+                if (item.query === "MANUAL_GAME" || item.query === "MANUAL_EVENT") {
+                    insertList.push({ 
+                        asignatura: item.asig, 
+                        tema: item.tema, 
+                        titulo: item.titulo, 
+                        canal: item.canal, 
+                        url: item.url,
+                        tipo: item.tipo || "video",
+                        link_externo: item.link_externo || item.url
+                    });
                 } else {
                     try {
                         const yt = await axios.get('https://www.googleapis.com/youtube/v3/search', {
@@ -217,7 +226,15 @@ app.get('/api/recursos', async (req, res) => {
                         });
                         if (yt.data.items.length > 0) {
                             const v = yt.data.items[0];
-                            insertList.push({ asignatura: item.asig, tema: item.tema, titulo: v.snippet.title, canal: v.snippet.channelTitle, url: `https://www.youtube.com/watch?v=${v.id.videoId}` });
+                            insertList.push({ 
+                                asignatura: item.asig, 
+                                tema: item.tema, 
+                                titulo: v.snippet.title, 
+                                canal: v.snippet.channelTitle, 
+                                url: `https://www.youtube.com/watch?v=${v.id.videoId}`,
+                                tipo: "video",
+                                link_externo: `https://www.youtube.com/watch?v=${v.id.videoId}`
+                            });
                         }
                     } catch (e) { console.error("Error YT:", item.query); }
                 }
@@ -226,18 +243,33 @@ app.get('/api/recursos', async (req, res) => {
             dbRecursos = inserted;
         }
 
-    dbRecursos.forEach(r => {
-                if (!formatted[r.asignatura]) formatted[r.asignatura] = {};
-                if (!formatted[r.asignatura][r.tema]) formatted[r.asignatura][r.tema] = [];
-                formatted[r.asignatura][r.tema].push({ 
-                    titulo: r.titulo, 
-                    canal: r.canal, 
-                    url: r.url,
-                    tipo: r.tipo || "video", // Por defecto es video
-                    link_externo: r.link_externo || r.url
-                });
+        // ¡ESTA LÍNEA FALTABA!
+        const formatted = {};
+
+        dbRecursos.forEach(r => {
+            if (!formatted[r.asignatura]) formatted[r.asignatura] = {};
+            if (!formatted[r.asignatura][r.tema]) formatted[r.asignatura][r.tema] = [];
+            formatted[r.asignatura][r.tema].push({ 
+                titulo: r.titulo, 
+                canal: r.canal, 
+                url: r.url,
+                tipo: r.tipo || "video", // Por defecto es video
+                link_externo: r.link_externo || r.url
             });
-    } catch (err) { res.status(500).json({}); }
+        });
+
+        // ¡ESTA LÍNEA TAMBIÉN FALTABA!
+        res.json(formatted);
+
+    // ¡AQUÍ ESTÁ EL CATCH MODIFICADO!
+    } catch (err) { 
+        console.error("ERROR CRÍTICO EN RECURSOS:", err);
+        res.status(500).json({ 
+            mensaje: "El servidor falló", 
+            error_real: err.message,
+            detalles: err
+        }); 
+    }
 });
 
 app.get('/api/mensajes/no-leidos/:id', (req, res) => res.json({ total: 0 }));

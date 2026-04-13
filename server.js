@@ -6,7 +6,6 @@ const { Server } = require('socket.io');
 const path = require('path');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
-const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);

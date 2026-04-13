@@ -14,8 +14,11 @@ const io = new Server(server);
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
-
-const db = new sqlite3.Database('./database.sqlite');
+const fs = require('fs');
+if (!fs.existsSync('/data/database.sqlite')) {
+    fs.copyFileSync('./database.sqlite', '/data/database.sqlite');
+}
+const db = new sqlite3.Database('/data/database.sqlite');
 
 db.serialize(() => {
     db.run(`CREATE TABLE IF NOT EXISTS usuarios (id INTEGER PRIMARY KEY AUTOINCREMENT, correo TEXT UNIQUE, password TEXT, no_control TEXT, curp TEXT, nombre TEXT, turno TEXT, semestre INTEGER, especialidad TEXT, rol TEXT, materias TEXT, horario TEXT)`);
